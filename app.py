@@ -15,11 +15,6 @@ from datetime import datetime
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 
-
-# ─────────────────────────────────────────────
-# Helper functions
-# ─────────────────────────────────────────────
-
 def get_pdf_text(pdf_docs):
     """Extract raw text from a list of uploaded PDF files."""
     text = ""
@@ -81,10 +76,6 @@ def get_conversational_chain():
     return prompt | model | StrOutputParser()
 
 
-# ─────────────────────────────────────────────
-# Core Q&A function  (no re-processing PDFs)
-# ─────────────────────────────────────────────
-
 def answer_question(user_question, pdf_names):
     """
     Load the pre-built FAISS index, retrieve relevant chunks,
@@ -106,11 +97,6 @@ def answer_question(user_question, pdf_names):
         ", ".join(pdf_names),
     ))
 
-
-# ─────────────────────────────────────────────
-# Sidebar CSV download helper
-# ─────────────────────────────────────────────
-
 def render_csv_download():
     if st.session_state.conversation_history:
         df = pd.DataFrame(
@@ -125,10 +111,6 @@ def render_csv_download():
         )
         st.sidebar.markdown(href, unsafe_allow_html=True)
 
-
-# ─────────────────────────────────────────────
-# Conversation renderer
-# ─────────────────────────────────────────────
 
 CHAT_CSS = """
 <style>
@@ -198,20 +180,14 @@ def render_conversation():
         )
 
 
-# ─────────────────────────────────────────────
-# Main app
-# ─────────────────────────────────────────────
-
 def main():
     st.set_page_config(page_title="Study Bot", page_icon=":books:")
     st.header("Study Bot :books:")
 
-    # ── Guard: API key ──
     if not api_key:
         st.error("Google API key not found. Please add GOOGLE_API_KEY to your .env file.")
         return
 
-    # ── Session-state initialisation ──
     if "conversation_history" not in st.session_state:
         st.session_state.conversation_history = []
     if "pdf_processed" not in st.session_state:
@@ -221,7 +197,6 @@ def main():
     if "last_question" not in st.session_state:
         st.session_state.last_question = ""
 
-    # ── Sidebar ──
     linkedin_profile_link = "https://www.linkedin.com/in/username/"
     github_profile_link   = "https://github.com/username/"
 
@@ -239,7 +214,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-        # Full-width buttons via CSS
         st.markdown(
             "<style>div.stButton > button { width: 100%; }</style>",
             unsafe_allow_html=True,
@@ -255,7 +229,6 @@ def main():
         submit_button = col1.button("Process")
         reset_button  = col2.button("Reset")
 
-        # ── Process button ──
         if submit_button:
             if pdf_docs:
                 with st.spinner("Processing PDFs…"):
@@ -271,7 +244,6 @@ def main():
             else:
                 st.warning("Please upload at least one PDF file before processing.")
 
-        # ── Reset button ──
         if reset_button:
             st.session_state.conversation_history = []
             st.session_state.last_question = ""
@@ -282,7 +254,6 @@ def main():
         # ── CSV download ──
         # render_csv_download()
 
-    # ── Main area: question input ──
     user_question = st.text_input(
         "Ask a question from the PDF files",
         key="input",
@@ -293,11 +264,9 @@ def main():
         if not st.session_state.pdf_processed:
             st.warning("Please upload and process PDF files first (use the sidebar).")
         elif user_question != st.session_state.last_question:
-            # New question → call the LLM
             answer_question(user_question, st.session_state.pdf_names)
             st.session_state.last_question = user_question
 
-    # ── Render full conversation ──
     render_conversation()
 
 
